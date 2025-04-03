@@ -34,8 +34,9 @@ def create_app():
     jwt = JWTManager(app)
 
     #import the blueprints inside the function to avoid circular imports
-
+    from Routes.patient_routes import patient_bp
 
     #register the  blueprints
+    app.register_blueprint(patient_bp)
 
     return app

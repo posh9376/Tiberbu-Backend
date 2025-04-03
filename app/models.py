@@ -26,6 +26,7 @@ class Doctor(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    kmpdc_number = db.Column(db.String(20), nullable=False, unique=True)
     specialisation_id = db.Column(db.Integer, db.ForeignKey('specialisations.id'))
     phone = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(100), nullable=False)
