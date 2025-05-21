@@ -132,4 +132,7 @@ appointments_schema = AppointmentSchema(many=True)
 medical_record_schema = MedicalRecordSchema()
 medical_records_schema = MedicalRecordSchema(many=True)
 
+availability_schema = AvailabilitySchema()
+availability_schemas =AvailabilitySchema(many= True)
+
 

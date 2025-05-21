@@ -27,7 +27,7 @@ class Doctor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     kmpdc_number = db.Column(db.String(20), nullable=False, unique=True)
-    specialisation_id = db.Column(db.Integer, db.ForeignKey('specialisations.id'))
+    specialisation_id = db.Column(db.Integer, db.ForeignKey('specialisations.id'), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(100), nullable=False)
     bio = db.Column(db.Text, nullable=False)
@@ -54,8 +54,8 @@ class Appointment(db.Model):
     __tablename__ = 'appointments'
 
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
-    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'))  # Fixed typo from 'db.FoeignKey'
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)  # Fixed typo from 'db.FoeignKey'
     scheduled_time = db.Column(db.DateTime, nullable=False)  # Changed from String to DateTime
     duration = db.Column(db.Integer, nullable=False)  # in minutes
     status = db.Column(db.String(50), nullable=False, default='Scheduled')  # Added default
@@ -73,7 +73,7 @@ class Availability(db.Model):
     __tablename__ = 'availabilities'
 
     id = db.Column(db.Integer, primary_key=True)
-    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'))
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'),nullable=False)
     day_of_week = db.Column(db.Integer, nullable=False)  # 0-6 (Monday-Sunday)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
@@ -90,7 +90,7 @@ class MedicalRecord(db.Model):
     __tablename__ = 'medical_records'
 
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'))
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
     appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id'), nullable=True)
     record_type = db.Column(db.String(50), nullable=False)
     title = db.Column(db.String(100), nullable=False)
@@ -108,8 +108,8 @@ class MedicalRecordAccess(db.Model):
     __tablename__ = 'medical_record_access'
 
     id = db.Column(db.Integer, primary_key=True)
-    record_id = db.Column(db.Integer, db.ForeignKey('medical_records.id'))
-    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'))
+    record_id = db.Column(db.Integer, db.ForeignKey('medical_records.id'), nullable=False)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
     access_granted_at = db.Column(db.DateTime, default=datetime.utcnow)
     access_revoked_at = db.Column(db.DateTime, nullable=True)
 

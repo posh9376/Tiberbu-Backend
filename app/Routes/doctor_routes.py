@@ -1,19 +1,19 @@
 from flask import Blueprint, request, jsonify
-from app.schemas import doctor_schema, doctors_schema
-from models import Doctor, db
+from app.schemas import doctor_schema, doctors_schema, availability_schema, availability_schemas
+from models import Doctor, db, Availability
 
 
-doctor_bp = Blueprint('doctor', __name__)
+doctor_bp = Blueprint('doctor', __name__,url_prefix = '/doctors')
 
 #list all doctors
-@doctor_bp.route('/doctor', methods=['GET'])
+@doctor_bp.route('/', methods=['GET'])
 def get_doctors():
     doctors = Doctor.query.all()
     #jsonify and serialize the data using the doctor schema 
     return jsonify(doctors_schema.dump(doctors))
 
 #register a doctor
-@doctor_bp.route('/doctor/add', methods=['POST'])
+@doctor_bp.route('/add', methods=['POST'])
 def register_doctor():
     data = request.get_json()
     #validate if all the required data is in the request
@@ -23,16 +23,16 @@ def register_doctor():
     ]
     if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required fields'}), 400
-    
+
     #check if Doctor already exists
     if Doctor.query.filter_by(kmpdc_number=data['kmpdc_number']).first():
         return jsonify({'error': 'Doctor with that kmpdc number already exists'}), 400
-    
+
     #Validate the data using the doctor schema
     errors = doctor_schema.validate(data)
     if errors:
         return jsonify(errors), 400
-    
+
     #add the new doctor to the db
     try:
         new_doctor = Doctor(**data)
@@ -41,7 +41,7 @@ def register_doctor():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500 # Return any database error
-    
+
     return jsonify({
         'message': 'Doctor added successfully',
         'doctor': doctor_schema.dump(new_doctor)
@@ -49,13 +49,13 @@ def register_doctor():
 
 
 #get particular doctor details
-@doctor_bp.route('/doctor/<int:id>', methods=['GET'])
+@doctor_bp.route('/<int:id>', methods=['GET'])
 def get_doctor_datails(id):
     doctor = Doctor.query.get_or_404(id)
     return jsonify(doctor_schema.dump(doctor))
 
 #update the doctor info
-@doctor_bp.route('/doctor', methods=['GET'])
+@doctor_bp.route('/<int:id>', methods=['P'])
 def update_doctor_details(id):
     doctor = Doctor.query.get_or_404(id)
     data = request.get_json()
@@ -66,7 +66,7 @@ def update_doctor_details(id):
     errors = doctor_schema.validate(data)
     if errors:
         return jsonify(errors), 400
-    
+
     #update the fields if they exist
     if 'name' in data:
         doctor.name = data['name']
@@ -80,7 +80,7 @@ def update_doctor_details(id):
         doctor.kmpdc_number = data['kmpdc_number']
     if 'email' in data:
         doctor.email = data['email']
-    
+
     db.session.commit()
 
     return jsonify({
@@ -89,11 +89,58 @@ def update_doctor_details(id):
     }), 200
 
 #delete a doctor
-@doctor_bp.route('/doctor/<int:id>', methods=['DELETE'])
+@doctor_bp.route('/<int:id>', methods=['DELETE'])
 def delete_doctor(id):
     doctor= Doctor.query.get_or_404(id)
 
     db.session.delete(doctor)
     db.session.commit()
     return jsonify({'message': "Doctor deleted successfully"}), 200
+
+#add doctor availability
+@doctor_bp.route('/<int:id>/availability', methods=['POST'])
+def add_doctor_availability(id):
+    #ensure the doctor exists
+    doctor = Doctor.query.get_or_404(id)
+    data = request.get_json()
+
+    #verify that all the required data is provided
+    required_fields = [
+        'doctor_id', 'day_of_week', 'start_time', 'end_time'
+    ]
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    #validate the data against the schema
+    errors = availability_schema.validate(data)
+    if errors:
+        return jsonify(errors), 400
+
+    try:
+        doctor_availability = Availability(**data)
+        db.session.add(doctor_availability)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500 # Return any database error
+
+    return jsonify({
+        'message': 'Doctor availability added successfully',
+        'availability': availability_schema.dump(doctor_avilability)
+    }), 201
+
+#get a doctor availabilit times
+@doctor_bp.route('/<int:id>/availability', methods=['Get'])
+def get_availablity(id):
+    slot = Availability.query.filter_by(doctor_id=id).all()
+    return jsonify(availability_schemas.dump(slot))
+
+#delete the availability slot
+@doctor_bp.route('/<int:id>/availablity/<int:slot_id>')
+def delete_availability(id, slot_id):
+    slot = Availability.query.filter_by(id=slot_id,doctor_id=id).first()
+
+    db.session.delete(slot)
+    db.session.commit()
+    return jsonify({'message': "Availability slot deleted successfully"}), 200
 
